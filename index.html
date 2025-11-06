@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luồng thanh toán Crypto qua MetaMask</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 32px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 16px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .tab {
+            padding: 15px 30px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab:hover {
+            color: #667eea;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .flow-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .flow-step {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+            position: relative;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .step-number {
+            flex-shrink: 0;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .step-content {
+            flex: 1;
+        }
+        
+        .step-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .step-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .step-actors {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .actor {
+            padding: 5px 12px;
+            background: white;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 2px solid #e9ecef;
+        }
+        
+        .actor.frontend {
+            border-color: #007bff;
+            color: #007bff;
+        }
+        
+        .actor.metamask {
+            border-color: #f6851b;
+            color: #f6851b;
+        }
+        
+        .actor.blockchain {
+            border-color: #28a745;
+            color: #28a745;
+        }
+        
+        .actor.backend {
+            border-color: #6f42c1;
+            color: #6f42c1;
+        }
+        
+        .code-example {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+        
+        .architecture {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .component {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .component:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .component.frontend {
+            border-color: #007bff;
+        }
+        
+        .component.metamask {
+            border-color: #f6851b;
+        }
+        
+        .component.blockchain {
+            border-color: #28a745;
+        }
+        
+        .component.backend {
+            border-color: #6f42c1;
+        }
+        
+        .component-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .component-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .component-desc {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
+        
+        .arrow {
+            text-align: center;
+            font-size: 30px;
+            color: #667eea;
+            margin: 10px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .note-title {
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 8px;
+        }
+        
+        .note-content {
+            color: #856404;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+            margin: 30px 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, #667eea, #764ba2);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            padding-left: 30px;
+        }
+        
+        .timeline-dot {
+            position: absolute;
+            left: -33px;
+            top: 5px;
+            width: 15px;
+            height: 15px;
+            background: #667eea;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px #667eea;
+        }
+        
+        .timeline-content {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .timeline-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .timeline-desc {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .comparison-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .comparison-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            color: #666;
+        }
+        
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .comparison-table tr:hover {
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Luồng thanh toán Crypto qua MetaMask</h1>
+        <p class="subtitle">Hiểu rõ cách hoạt động để tích hợp hiệu quả</p>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">Tổng quan</button>
+            <button class="tab" onclick="switchTab('detailed-flow')">Luồng chi tiết</button>
+            <button class="tab" onclick="switchTab('architecture')">Kiến trúc</button>
+            <button class="tab" onclick="switchTab('comparison')">So sánh phương thức</button>
+        </div>
+        
+        <!-- Tab 1: Tổng quan -->
+        <div id="overview" class="tab-content active">
+            <h2 style="margin-bottom: 20px; color: #333;">📊 Kiến trúc tổng quan</h2>
+            
+            <div class="architecture">
+                <div class="component frontend">
+                    <div class="component-icon">🖥️</div>
+                    <div class="component-title">Website của bạn</div>
+                    <div class="component-desc">
+                        Giao diện checkout, tích hợp Web3.js/Ethers.js, hiển thị giá crypto realtime
+                    </div>
+                </div>
+                
+                <div class="component metamask">
+                    <div class="component-icon">🦊</div>
+                    <div class="component-title">MetaMask Wallet</div>
+                    <div class="component-desc">
+                        Ví crypto của người dùng, quản lý private key, ký giao dịch
+                    </div>
+                </div>
+                
+                <div class="component blockchain">
+                    <div class="component-icon">⛓️</div>
+                    <div class="component-title">Blockchain Network</div>
+                    <div class="component-desc">
+                        Ethereum/BSC/Polygon, xử lý giao dịch, lưu trữ bất biến
+                    </div>
+                </div>
+                
+                <div class="component backend">
+                    <div class="component-icon">⚙️</div>
+                    <div class="component-title">Backend Server</div>
+                    <div class="component-desc">
+                        Xác thực giao dịch, cập nhật đơn hàng, quản lý database
+                    </div>
+                </div>
+            </div>
+            
+            <div class="note">
+                <div class="note-title">💡 Điểm quan trọng:</div>
+                <div class="note-content">
+                    <strong>Frontend không cần backend key!</strong> Private key chỉ nằm trong MetaMask của người dùng. 
+                    Website của bạn chỉ cần địa chỉ ví nhận tiền (public address). Backend chỉ dùng để xác thực 
+                    giao dịch đã xảy ra trên blockchain, không tham gia ký giao dịch.
+                </div>
+            </div>
+            
+            <h2 style="margin: 40px 0 20px; color: #333;">🔄 Luồng cơ bản (5 bước chính)</h2>
+            
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <div class="step-title">Người dùng chọn sản phẩm & Checkout</div>
+                        <div class="step-description">
+                            Khách hàng thêm sản phẩm vào giỏ, đến trang thanh toán, chọn phương thức "Pay with Crypto"
+                        </div>
+                        <div class="step-actors">
+                            <span class="actor frontend">Frontend</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flow-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <div class="step-title">Kết nối MetaMask</div>
+                        <div class="step-description">
+                            Website yêu cầu kết nối ví → MetaMask hiện popup → Người dùng cho phép kết nối 
+                            → Website nhận địa chỉ ví người dùng (0x123...)
+                        </div>
+                        <div class="step-actors">
+                            <span class="actor frontend">Frontend</span>
+                            <span class="actor metamask">MetaMask</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flow-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <div class="step-title">Tính toán số tiền Crypto</div>
+                        <div class="step-description">
+                            Lấy giá ETH hiện tại từ API (VD: CoinGecko) → Chuyển đổi USD sang ETH 
+                            (VD: $100 / $3,500 = 0.0286 ETH) → Hiển thị cho người dùng
+                        </div>
+                        <div class="step-actors">
+                            <span class="actor frontend">Frontend</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flow-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <div class="step-title">Thực hiện thanh toán</div>
+                        <div class="step-description">
+                            Website tạo transaction → MetaMask hiện popup xác nhận → Người dùng review (số tiền, gas fee) 
+                            → Xác nhận → MetaMask ký và gửi lên blockchain → Nhận transaction hash
+                        </div>
+                        <div class="step-actors">
+                            <span class="actor frontend">Frontend</span>
+                            <span class="actor metamask">MetaMask</span>
+                            <span class="actor blockchain">Blockchain</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flow-step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <div class="step-title">Xác thực & Hoàn tất</div>
+                        <div class="step-description">
+                            Frontend gửi transaction hash cho Backend → Backend query blockchain để xác thực 
+                            (đúng địa chỉ, đúng số tiền, đã confirm) → Cập nhật trạng thái đơn hàng → 
+                            Gửi email xác nhận → Hiển thị thành công
+                        </div>
+                        <div class="step-actors">
+                            <span class="actor frontend">Frontend</span>
+                            <span class="actor backend">Backend</span>
+                            <span class="actor blockchain">Blockchain</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab 2: Luồng chi tiết -->
+        <div id="detailed-flow" class="tab-content">
+            <h2 style="margin-bottom: 20px; color: #333;">🔍 Luồng chi tiết từng bước</h2>
+            
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">📱 Bước 1: Khởi tạo kết nối Web3</div>
+                        <div class="timeline-desc">
+                            <strong>Frontend kiểm tra:</strong><br>
+                            • window.ethereum có tồn tại không? (MetaMask đã cài?)<br>
+                            • Nếu có → Request quyền truy cập<br>
+                            • Nếu không → Hiển thị link cài đặt MetaMask<br><br>
+                            
+                            <strong>MetaMask popup xuất hiện:</strong><br>
+                            • Hiển thị tên website đang yêu cầu<br>
+                            • Người dùng chọn account muốn kết nối<br>
+                            • Click "Connect" hoặc "Cancel"
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">💰 Bước 2: Tạo Order & Tính giá</div>
+                        <div class="timeline-desc">
+                            <strong>Frontend gửi request đến Backend:</strong><br>
+                            POST /api/create-order<br>
+                            Body: { items, totalUSD, customerEmail }<br><br>
+                            
+                            <strong>Backend xử lý:</strong><br>
+                            • Tạo orderId unique<br>
+                            • Query API lấy giá ETH realtime<br>
+                            • Tính: ethAmount = totalUSD / ethPrice<br>
+                            • Lưu vào database với status: 'pending'<br>
+                            • Set timeout (VD: 30 phút)<br><br>
+                            
+                            <strong>Response về Frontend:</strong><br>
+                            { orderId, merchantAddress, ethAmount, expiresAt }
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">🔐 Bước 3: Tạo Transaction</div>
+                        <div class="timeline-desc">
+                            <strong>Frontend sử dụng Ethers.js:</strong><br>
+                            • Chuyển đổi ETH amount sang Wei (1 ETH = 10^18 Wei)<br>
+                            • Tạo transaction object:<br>
+                            &nbsp;&nbsp;- to: merchantAddress (địa chỉ ví của bạn)<br>
+                            &nbsp;&nbsp;- value: amountInWei<br>
+                            &nbsp;&nbsp;- from: userAddress (tự động)<br>
+                            &nbsp;&nbsp;- gas: tự động estimate<br><br>
+                            
+                            <strong>Gọi hàm:</strong><br>
+                            signer.sendTransaction(txObject)
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">✍️ Bước 4: Người dùng xác nhận</div>
+                        <div class="timeline-desc">
+                            <strong>MetaMask popup chi tiết:</strong><br>
+                            • From: 0xABC... (địa chỉ người dùng)<br>
+                            • To: 0xXYZ... (địa chỉ merchant)<br>
+                            • Amount: 0.0286 ETH ($100)<br>
+                            • Gas fee: 0.0005 ETH (~$1.75)<br>
+                            • Total: 0.0291 ETH<br><br>
+                            
+                            <strong>Người dùng có 3 lựa chọn:</strong><br>
+                            1. Confirm → Ký và gửi transaction<br>
+                            2. Reject → Hủy bỏ<br>
+                            3. Edit gas → Tùy chỉnh phí (slow/standard/fast)
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">⛓️ Bước 5: Gửi lên Blockchain</div>
+                        <div class="timeline-desc">
+                            <strong>MetaMask thực hiện:</strong><br>
+                            • Ký transaction bằng private key (offline)<br>
+                            • Gửi signed transaction lên Ethereum node<br>
+                            • Nhận transaction hash ngay lập tức<br>
+                            • Hash này là "biên lai tạm thời"<br><br>
+                            
+                            <strong>Transaction vào mempool:</strong><br>
+                            • Chờ miners/validators đưa vào block<br>
+                            • Thời gian chờ: 15 giây - 2 phút (tùy gas)<br>
+                            • Status: "Pending"
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">✅ Bước 6: Đợi Confirmations</div>
+                        <div class="timeline-desc">
+                            <strong>Block confirmation:</strong><br>
+                            • Transaction được đưa vào block → 1 confirmation<br>
+                            • Block tiếp theo → 2 confirmations<br>
+                            • Càng nhiều confirmations = càng an toàn<br><br>
+                            
+                            <strong>Khuyến nghị:</strong><br>
+                            • Ethereum: Đợi ít nhất 12 confirmations<br>
+                            • BSC: 15 confirmations<br>
+                            • Polygon: 128 confirmations<br><br>
+                            
+                            <strong>Frontend tracking:</strong><br>
+                            await tx.wait() // Đợi 1 confirmation<br>
+                            await tx.wait(12) // Đợi 12 confirmations
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">🔍 Bước 7: Backend xác thực</div>
+                        <div class="timeline-desc">
+                            <strong>Frontend gửi đến Backend:</strong><br>
+                            POST /api/verify-payment<br>
+                            Body: { orderId, txHash, from, to, blockNumber }<br><br>
+                            
+                            <strong>Backend kiểm tra kỹ càng:</strong><br>
+                            1. Transaction có tồn tại không?<br>
+                            2. Địa chỉ TO có đúng merchant wallet?<br>
+                            3. Số tiền có khớp với order? (cho phép sai số 0.1%)<br>
+                            4. Transaction đã success? (status = 1)<br>
+                            5. Đủ số confirmations chưa?<br>
+                            6. Transaction này đã được dùng cho order khác chưa? (chống double-spend)<br><br>
+                            
+                            <strong>Nếu pass tất cả:</strong><br>
+                            • Update order status: 'paid'<br>
+                            • Lưu txHash vào database<br>
+                            • Trigger fulfillment process<br>
+                            • Gửi email xác nhận
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">🎉 Bước 8: Hoàn tất</div>
+                        <div class="timeline-desc">
+                            <strong>Frontend nhận response:</strong><br>
+                            { success: true, order: {...} }<br><br>
+                            
+                            <strong>Hiển thị thành công:</strong><br>
+                            • Show success message<br>
+                            • Hiển thị transaction hash với link Etherscan<br>
+                            • Redirect đến order confirmation page<br><br>
+                            
+                            <strong>Người dùng có thể:</strong><br>
+                            • View transaction trên Etherscan<br>
+                            • Download invoice<br>
+                            • Track order status
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="note">
+                <div class="note-title">⚠️ Xử lý lỗi phổ biến:</div>
+                <div class="note-content">
+                    <strong>1. User reject transaction:</strong> Show message, cho phép retry<br>
+                    <strong>2. Insufficient funds:</strong> Check balance trước khi gửi<br>
+                    <strong>3. Gas too low:</strong> Tự động estimate + buffer 10%<br>
+                    <strong>4. Network congestion:</strong> Suggest higher gas hoặc đợi<br>
+                    <strong>5. Wrong network:</strong> Detect chain ID, prompt user switch<br>
+                    <strong>6. Transaction failed:</strong> Lưu log, cho phép retry với gas cao hơn
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab 3: Kiến trúc -->
+        <div id="architecture" class="tab-content">
+            <h2 style="margin-bottom: 20px; color: #333;">🏗️ Kiến trúc hệ thống</h2>
+            
+            <h3 style="color: #667eea; margin: 30px 0 15px;">1. Frontend Architecture</h3>
+            <div class="code-example">
+Website (React/Vue/Plain JS)
+├── Web3 Provider (Ethers.js/Web3.js)
+├── MetaMask Integration
+│   ├── Wallet Connection
+│   ├── Account Management
+│   └── Transaction Signing
+├── Price API Integration
+│   ├── CoinGecko API
+│   └── Real-time price updates
+└── UI Components
+    ├── Connect Wallet Button
+    ├── Payment Modal
+    ├── Transaction Tracker
+    └── Success/Error Messages
+            </div>
+            
+            <h3 style="color: #667eea; margin: 30px 0 15px;">2. Backend Architecture</h3>
+            <div class="code-example">
+Server (Node.js/Python/PHP)
+├── API Endpoints
+│   ├── POST /api/create-order
+│   ├── POST /api/verify-payment
+│   └── GET /api/order-status/:id
+├── Blockchain Integration
+│   ├── Ethereum Node (Infura/Alchemy)
+│   ├── Transaction Verification
+│   └── Event Monitoring
+├── Database
+│   ├── Orders table
+│   ├── Transactions table
+│   └── Payment logs
+└── Background Jobs
+    ├── Price update cron
+    ├── Transaction monitoring
+    └── Order expiration cleanup
+            </div>
+            
+            <h3 style="color: #667eea; margin: 30px 0 15px;">3. Data Flow</h3>
+            <div class="code-example">
+User Action → Frontend → MetaMask → Blockchain
+                ↓
+            Backend API
+                ↓
+      Verify on Blockchain
+                ↓
+         Update Database
+                ↓
+          Notify Frontend
+                ↓
+         Show Success UI
+            </div>
+            
+            <h3 style="color: #667eea; margin: 30px 0 15px;">4. Security Layers</h3>
+            
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <div class="step-number">🔒</div>
+                    <div class="step-content">
+                        <div class="step-title">Private Key Security</div>
+                        <div class="step-description">
+                            • Private key KHÔNG BAO GIỜ rời khỏi MetaMask<br>
+                            • Website không thể access private key<br>
+                            • Mọi transaction đều cần user confirmation<br>
+                            • MetaMask encrypt private key với password
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flow-step">
+                    <div class="step-number">🛡️</div>
+                    <div class="step-content">
+                        <div class="step-title">Transaction Validation</div>
+                        <div class="step-description">
+                            • Frontend validate trước khi gửi (amount, address format)<br>
+                            • Backend verify lại từ blockchain (không tin frontend)<br>
+                            • Check transaction status, confirmations<br>
+                            • Prevent double-spending (lưu txHash đã dùng)
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flow-step">
+                    <div class="step-number">🔐</div>
+                    <div class="step-content">
+                        <div class="step-title">API Security</div>
+                        <div class="step-description">
+                            • HTTPS only (SSL certificate)<br>
+                            • Rate limiting (prevent spam)<br>
+                            • CORS properly configured<br>
+                            • API authentication cho sensitive endpoints<br>
+                            • Input validation & sanitization
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flow-step">
+                    <div class="step-number">⛓️</div>
+                    <div class="step-content">
+                        <div class="step-title">Blockchain Immutability</div>
+                        <div class="step-description">
+                            • Transaction trên blockchain không thể thay đổi<br>
+                            • Mọi người có thể verify trên block explorer<br>
+                            • Transparent và auditable<br>
+                            • Không cần trust third party
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <h3 style="color: #667eea; margin: 30px 0 15px;">5. Database Schema (Đề xuất)</h3>
+            <div class="code-example">
+-- Bảng Orders
+CREATE TABLE orders (
+    id VARCHAR(50) PRIMARY KEY,
+    customer_email VARCHAR(255),
+    total_usd DECIMAL(10,2),
+    eth_amount DECIMAL(18,8),
+    eth_price DECIMAL(10,2),
+    merchant_address VARCHAR(42),
+    status ENUM('pending', 'paid', 'expired', 'refunded'),
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+-- Bảng Transactions
+CREATE TABLE transactions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id VARCHAR(50),
+    tx_hash VARCHAR(66) UNIQUE,
+    from_address VARCHAR(42),
+    to_address VARCHAR(42),
+    amount DECIMAL(18,8),
+    block_number BIGINT,
+    confirmations INT,
+    status ENUM('pending', 'confirmed', 'failed'),
+    verified_at TIMESTAMP,
+    created_at TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id)
+);
+
+-- Bảng Payment Logs
+CREATE TABLE payment_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id VARCHAR(50),
+    event_type VARCHAR(50),
+    event_data JSON,
+    created_at TIMESTAMP
+);
+            </div>
+        </div>
+        
+        <!-- Tab 4: So sánh phương thức -->
+        <div id="comparison" class="tab-content">
+            <h2 style="margin-bottom: 20px; color: #333;">⚖️ So sánh các phương thức thanh toán Crypto</h2>
+            
+            <h3 style="color: #667eea; margin: 30px 0 15px;">1. Direct Payment (Thanh toán trực tiếp)</h3>
+            
+            <table class="comparison-table">
+                <tr>
+                    <th style="width: 150px;">Đặc điểm</th>
+                    <th>Mô tả</th>
+                </tr>
+                <tr>
+                    <td><strong>Cách hoạt động</strong></td>
+                    <td>User chuyển ETH/Token trực tiếp từ ví của họ đến ví merchant</td>
+                </tr>
+                <tr>
+                    <td><strong>Ưu điểm</strong></td>
+                    <td>
+                        ✅ Đơn giản nhất, dễ implement<br>
+                        ✅ Không cần smart contract<br>
+                        ✅ Gas fee thấp nhất<br>
+                        ✅ Instant (sau khi confirm)
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Nhược điểm</strong></td>
+                    <td>
+                        ❌ Không tự động<br>
+                        ❌ Phải manual verify mỗi transaction<br>
+                        ❌ Khó quản lý khi scale lớn<br>
+                        ❌ Không có escrow (không giữ tiền tạm)
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Phù hợp cho</strong></td>
+                    <td>Website nhỏ, startup, MVP, volume thấp (< 100 orders/ngày)</td>
+                </tr>
+                <tr>
+                    <td><strong>Chi phí</strong></td>
+                    <td>Gas fee: ~$1-5 (ETH), ~$0.1-0.5 (BSC/Polygon)</td>
+                </tr>
+            </table>
+            
+            <h3 style="color: #667eea; margin: 30px 0 15px;">2. Smart Contract Payment (Thanh toán qua Smart Contract)</h3>
+            
+            <table class="comparison-table">
+                <tr>
+                    <th style="width: 150px;">Đặc điểm</th>
+                    <th>Mô tả</th>
+                </tr>
+                <tr>
+                    <td><strong>Cách hoạt động</strong></td>
+                    <td>User gửi tiền vào smart contract → Contract verify → Auto release cho merchant</td>
+                </tr>
+                <tr>
+                    <td><strong>Ưu điểm</strong></td>
+                    <td>
+                        ✅ Tự động hóa hoàn toàn<br>
+                        ✅ Escrow built-in (giữ tiền tạm)<br>
+                        ✅ Có thể refund tự động<br>
+                        ✅ Trustless (không cần tin merchant)<br>
+                        ✅ Hỗ trợ multi-sig, time-lock
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Nhược điểm</strong></td>
+                    <td>
+                        ❌ Phức tạp hơn nhiều<br>
+                        ❌ Cần viết & audit smart contract<br>
+                        ❌ Gas fee cao hơn (x2-3 lần)<br>
+                        ❌ Khó update logic sau khi deploy<br>
+                        ❌ Rủi ro smart contract bugs
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Phù hợp cho</strong></td>
+                    <td>Marketplace lớn, escrow cần thiết, high-value transactions</td>
+                </tr>
+                <tr>
+                    <td><strong>Chi phí</strong></td>
+                    <td>
+                        Deploy contract: $50-200<br>
+                        Mỗi transaction: $3-15 (ETH), $0.3-1 (BSC/Polygon)
+                    </td>
+                </tr>
+            </table>
+            
+            <h3 style="color: #667eea; margin: 30px 0 15px;">3. Payment Gateway (Sử dụng bên thứ 3)</h3>
+            
+            <table class="comparison-table">
+                <tr>
+                    <th style="width: 150px;">Đặc điểm</th>
+                    <th>Mô tả</th>
+                </tr>
+                <tr>
+                    <td><strong>Nhà cung cấp</strong></td>
+                    <td>Coinbase Commerce, BitPay, CoinPayments, NOWPayments</td>
+                </tr>
+                <tr>
+                    <td><strong>Ưu điểm</strong></td>
+                    <td>
+                        ✅ Plug & play, rất dễ tích hợp<br>
+                        ✅ Hỗ trợ nhiều coin (BTC, ETH, USDT...)<br>
+                        ✅ Auto convert sang fiat (tùy chọn)<br>
+                        ✅ Dashboard quản lý đầy đủ<br>
+                        ✅ Compliance & tax reporting<br>
+                        ✅ Customer support
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Nhược điểm</strong></td>
+                    <td>
+                        ❌ Phí cao (1-2% mỗi transaction)<br>
+                        ❌ KYC required (đối với merchant)<br>
+                        ❌ Phụ thuộc vào bên thứ 3<br>
+                        ❌ Ít control hơn<br>
+                        ❌ Có thể bị banned/suspended
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Phù hợp cho</strong></td>
+                    <td>Businesses muốn nhanh, không có dev crypto, cần support nhiều coin</td>
+                </tr>
+                <tr>
+                    <td><strong>Chi phí</strong></td>
+                    <td>1-2% per transaction + withdrawal fee</td>
+                </tr>
+            </table>
+            
+            <h3 style="color: #667eea; margin: 30px 0 15px;">4. So sánh tổng quan</h3>
+            
+            <table class="comparison-table">
+                <tr>
+                    <th>Tiêu chí</th>
+                    <th>Direct Payment</th>
+                    <th>Smart Contract</th>
+                    <th>Payment Gateway</th>
+                </tr>
+                <tr>
+                    <td><strong>Độ phức tạp</strong></td>
+                    <td>⭐ Dễ</td>
+                    <td>⭐⭐⭐⭐⭐ Rất khó</td>
+                    <td>⭐⭐ Trung bình</td>
+                </tr>
+                <tr>
+                    <td><strong>Chi phí</strong></td>
+                    <td>⭐⭐⭐⭐⭐ Thấp nhất</td>
+                    <td>⭐⭐⭐ Trung bình</td>
+                    <td>⭐⭐ Cao (1-2%)</td>
+                </tr>
+                <tr>
+                    <td><strong>Tốc độ tích hợp</strong></td>
+                    <td>1-2 ngày</td>
+                    <td>1-2 tuần</td>
+                    <td>Vài giờ</td>
+                </tr>
+                <tr>
+                    <td><strong>Bảo mật</strong></td>
+                    <td>⭐⭐⭐⭐ Tốt</td>
+                    <td>⭐⭐⭐⭐⭐ Rất tốt</td>
+                    <td>⭐⭐⭐⭐ Tốt</td>
+                </tr>
+                <tr>
+                    <td><strong>Control</strong></td>
+                    <td>⭐⭐⭐⭐⭐ Full control</td>
+                    <td>⭐⭐⭐⭐ High control</td>
+                    <td>⭐⭐ Limited</td>
+                </tr>
+                <tr>
+                    <td><strong>Scalability</strong></td>
+                    <td>⭐⭐ Limited</td>
+                    <td>⭐⭐⭐⭐⭐ Excellent</td>
+                    <td>⭐⭐⭐⭐ Very good</td>
+                </tr>
+            </table>
+            
+            <div class="note">
+                <div class="note-title">💡 Khuyến nghị:</div>
+                <div class="note-content">
+                    <strong>Bắt đầu với Direct Payment nếu:</strong><br>
+                    • Bạn là startup/side project<br>
+                    • Volume thấp (< 100 orders/ngày)<br>
+                    • Muốn tự học và control hoàn toàn<br>
+                    • Budget hạn chế<br><br>
+                    
+                    <strong>Dùng Payment Gateway nếu:</strong><br>
+                    • Cần nhanh, không có thời gian dev<br>
+                    • Muốn hỗ trợ nhiều cryptocurrency<br>
+                    • Cần convert sang fiat tự động<br>
+                    • OK với phí 1-2%<br><br>
+                    
+                    <strong>Smart Contract chỉ khi:</strong><br>
+                    • Bạn có dev blockchain experience<br>
+                    • Cần escrow/refund tự động<br>
+                    • High volume và cần automation<br>
+                    • Budget để audit contract
+                </div>
+            </div>
+            
+            <h3 style="color: #667eea; margin: 30px 0 15px;">5. Chi phí thực tế (Ví dụ 100 orders/ngày)</h3>
+            
+            <table class="comparison-table">
+                <tr>
+                    <th>Phương thức</th>
+                    <th>Setup Cost</th>
+                    <th>Monthly Cost</th>
+                    <th>Per Transaction</th>
+                    <th>Total/month</th>
+                </tr>
+                <tr>
+                    <td><strong>Direct (ETH)</strong></td>
+                    <td>$0</td>
+                    <td>$0</td>
+                    <td>$2 gas</td>
+                    <td>$6,000</td>
+                </tr>
+                <tr>
+                    <td><strong>Direct (Polygon)</strong></td>
+                    <td>$0</td>
+                    <td>$0</td>
+                    <td>$0.1 gas</td>
+                    <td>$300</td>
+                </tr>
+                <tr>
+                    <td><strong>Smart Contract (ETH)</strong></td>
+                    <td>$100-500</td>
+                    <td>$0</td>
+                    <td>$5 gas</td>
+                    <td>$15,000</td>
+                </tr>
+                <tr>
+                    <td><strong>Payment Gateway</strong></td>
+                    <td>$0</td>
+                    <td>$0</td>
+                    <td>1% + $0.5 gas</td>
+                    <td>Tùy revenue</td>
+                </tr>
+            </table>
+            
+            <div style="margin-top: 20px; padding: 20px; background: #e7f3ff; border-radius: 10px; border-left: 4px solid #007bff;">
+                <strong>💰 Lưu ý về chi phí:</strong><br>
+                • Gas fee thay đổi theo network congestion<br>
+                • Polygon/BSC rẻ hơn ETH mainnet 100-1000 lần<br>
+                • Layer 2 solutions (Arbitrum, Optimism) rẻ hơn 10-50 lần<br>
+                • Users trả gas fee, không phải merchant<br>
+                • Nên có option cho user chọn network để tiết kiệm
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
